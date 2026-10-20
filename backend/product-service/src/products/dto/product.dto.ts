@@ -1,7 +1,8 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, MaxLength, Min } from 'class-validator';
 
 export class CreateProductDto {
   @IsNotEmpty()
+  @MaxLength(255)
   name: string;
 
   @IsOptional()
@@ -23,6 +24,7 @@ export class CreateProductDto {
 export class UpdateProductDto {
   @IsOptional()
   @IsNotEmpty()
+  @MaxLength(255)
   name?: string;
 
   @IsOptional()

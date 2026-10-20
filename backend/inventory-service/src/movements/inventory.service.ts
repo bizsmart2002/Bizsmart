@@ -21,6 +21,8 @@ export class InventoryService {
   }
 
   async findByProduct(productId: number) {
+    const product = await this.productsRef.findOne({ where: { id: productId } });
+    if (!product) throw new NotFoundException('Producto no encontrado');
     return this.getOrCreateInventory(productId);
   }
 
@@ -100,7 +102,7 @@ export class InventoryService {
     reference: string | null;
     createdBy: number;
     minimumStock: number;
-  }) {
+     }) {
     const inventory = await this.getOrCreateInventory(params.productId);
     const previousStock = inventory.currentStock;
 
@@ -150,3 +152,4 @@ export class InventoryService {
     return { inventory, movement, alertCreated };
   }
 }
+ 
