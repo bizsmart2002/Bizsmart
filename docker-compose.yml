@@ -134,5 +134,11 @@ services:
     depends_on:
       - api-gateway
 
+  dozzle:
+    image: amir20/dozzle:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 volumes:
   bizsmart_pgdata:
