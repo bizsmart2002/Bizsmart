@@ -240,9 +240,10 @@ async function autovalidar() {
       console.log(`  ✗ ${nombre}\n      ${err.message}`);
     }
   }
-  servidor.close();
+  servidor.closeAllConnections();
+  await new Promise((ok) => servidor.close(ok));
   console.log(fallidas === 0 ? `\nTodas las pruebas pasaron (${pruebas.length}/${pruebas.length})` : `\n${fallidas} prueba(s) fallaron`);
-  process.exit(fallidas === 0 ? 0 : 1);
+  process.exitCode = fallidas === 0 ? 0 : 1;
 }
 
 if (require.main === module) {
