@@ -1,0 +1,138 @@
+version: "3.9"
+
+x-common-env: &common-env
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_USER: bizsmart
+  DB_PASSWORD: changeme
+  DB_NAME: bizsmart
+  JWT_SECRET: changeme-super-secret
+  JWT_EXPIRES_IN: 8h
+  AUTH_SERVICE_URL: http://auth-service:3001
+  PRODUCT_SERVICE_URL: http://product-service:3002
+  INVENTORY_SERVICE_URL: http://inventory-service:3003
+  SALES_SERVICE_URL: http://sales-service:3004
+  CUSTOMER_SERVICE_URL: http://customer-service:3005
+  REPORTING_SERVICE_URL: http://reporting-service:3006
+  AI_SERVICE_URL: http://ai-service:3007
+  # HU02 - OAuth 2.0. Reemplaza estos dos con tus credenciales reales de
+  # Google Cloud Console (o usa un archivo .env / docker-compose.override.yml
+  # para no dejarlas escritas aquí). Mientras no se configuren, el login con
+  # Google simplemente no funcionará, pero el resto del sistema sigue igual.
+  GOOGLE_CLIENT_ID: changeme-google-client-id
+  GOOGLE_CLIENT_SECRET: changeme-google-client-secret
+  GOOGLE_CALLBACK_URL: http://localhost:3000/auth/google/callback
+  FRONTEND_URL: http://localhost:4200
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bizsmart
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: bizsmart
+    ports:
+      - "5432:5432"
+    volumes:
+      - bizsmart_pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./db/seed-demo.sql:/docker-entrypoint-initdb.d/02-seed-demo.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bizsmart"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build: ./backend/auth-service
+    environment:
+      <<: *common-env
+      PORT: 3001
+    ports: ["3001:3001"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  product-service:
+    build: ./backend/product-service
+    environment:
+      <<: *common-env
+      PORT: 3002
+    ports: ["3002:3002"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  inventory-service:
+    build: ./backend/inventory-service
+    environment:
+      <<: *common-env
+      PORT: 3003
+    ports: ["3003:3003"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  sales-service:
+    build: ./backend/sales-service
+    environment:
+      <<: *common-env
+      PORT: 3004
+    ports: ["3004:3004"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  customer-service:
+    build: ./backend/customer-service
+    environment:
+      <<: *common-env
+      PORT: 3005
+    ports: ["3005:3005"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  reporting-service:
+    build: ./backend/reporting-service
+    environment:
+      <<: *common-env
+      PORT: 3006
+    ports: ["3006:3006"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ai-service:
+    build: ./backend/ai-service
+    environment:
+      <<: *common-env
+      PORT: 3007
+    ports: ["3007:3007"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api-gateway:
+    build: ./backend/api-gateway
+    environment:
+      <<: *common-env
+      PORT: 3000
+    ports: ["3000:3000"]
+    depends_on:
+      - auth-service
+      - product-service
+      - inventory-service
+      - sales-service
+      - customer-service
+      - reporting-service
+      - ai-service
+
+  frontend:
+    build: ./frontend
+    ports: ["4200:80"]
+    depends_on:
+      - api-gateway
+
+volumes:
+  bizsmart_pgdata:

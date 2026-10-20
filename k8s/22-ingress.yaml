@@ -1,0 +1,27 @@
+# Requiere un Ingress Controller instalado en el clúster (ej. ingress-nginx).
+# Ajustar el host según el dominio real disponible.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bizsmart-ingress
+  namespace: bizsmart
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: bizsmart.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port: { number: 3000 }
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port: { number: 80 }

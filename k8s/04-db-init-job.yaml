@@ -1,0 +1,39 @@
+# Antes de aplicar este Job, crear el ConfigMap con el script SQL:
+#   kubectl create configmap bizsmart-db-init -n bizsmart \
+#     --from-file=schema.sql=db/schema.sql \
+#     --from-file=seed-demo.sql=db/seed-demo.sql
+#
+# Este Job corre una sola vez tras crear el StatefulSet de PostgreSQL.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bizsmart-db-init
+  namespace: bizsmart
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: db-init
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres -U "$DB_USER"; do sleep 2; done
+              psql "postgresql://$DB_USER:$DB_PASSWORD@postgres:5432/$DB_NAME" -f /sql/schema.sql
+              psql "postgresql://$DB_USER:$DB_PASSWORD@postgres:5432/$DB_NAME" -f /sql/seed-demo.sql
+          env:
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: DB_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: DB_PASSWORD } }
+            - name: DB_NAME
+              valueFrom: { configMapKeyRef: { name: bizsmart-config, key: DB_NAME } }
+          volumeMounts:
+            - name: sql
+              mountPath: /sql
+      volumes:
+        - name: sql
+          configMap: { name: bizsmart-db-init }

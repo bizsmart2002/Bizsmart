@@ -1,0 +1,13 @@
+{
+  "name": "bizsmart-integration-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pruebas de INTEGRACION reales: controller+service+BD real y llamadas HTTP entre microservicios, contra el stack ya levantado con docker compose (api-gateway en localhost:3000). No usa mocks.",
+  "scripts": {
+    "test": "jest --runInBand"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Evidencia real - Pruebas unitarias (Jest)</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; background:#FFFFFF; margin:0; padding:30px 40px; color:#1B1B1F; }
+  h1 { font-family: Cambria, Georgia, serif; color:#21295C; font-size:22px; margin-bottom:4px; }
+  .sub { color:#5A6472; font-size:13px; margin-bottom:18px; }
+  .term { background:#1B1B1F; color:#D7F5D0; font-family: Consolas, monospace; font-size:12.5px; padding:16px 18px; border-radius:8px; white-space:pre; line-height:1.45; }
+  .term .pass { color:#4ADE80; }
+  .term .cmd { color:#63E6DD; }
+  .term .hdr { color:#F2A541; }
+  .cols { display:flex; gap:16px; }
+  .col { flex:1; }
+</style>
+</head>
+<body>
+  <h1>BizSmart — Pruebas unitarias (Jest)</h1>
+  <div class="sub">Comando real ejecutado en cada microservicio · 13-14 oct 2026</div>
+  <div class="cols">
+    <div class="col">
+      <div class="term"><span class="cmd">$ cd backend/auth-service && npx jest --coverage --verbose</span>
+
+<span class="hdr">PASS</span> src/auth/guards/roles.guard.spec.ts
+  RolesGuard
+    <span class="pass">✓</span> permite el acceso cuando el handler no tiene @Roles() ni @Permissions()
+    <span class="pass">✓</span> permite el acceso cuando el rol del usuario está en @Roles()
+    <span class="pass">✓</span> rechaza con ForbiddenException cuando el rol no está permitido
+    <span class="pass">✓</span> permite el acceso cuando el usuario tiene todos los @Permissions()
+    <span class="pass">✓</span> rechaza cuando falta al menos uno de los @Permissions()
+
+<span class="hdr">PASS</span> src/auth/auth.service.spec.ts (5.48s)
+  AuthService
+    register
+      <span class="pass">✓</span> crea un usuario nuevo con rol OWNER y devuelve accessToken
+      <span class="pass">✓</span> rechaza el registro si el correo ya existe
+    login
+      <span class="pass">✓</span> devuelve accessToken con credenciales válidas
+      <span class="pass">✓</span> rechaza contraseña incorrecta sin revelar si el correo existe
+      <span class="pass">✓</span> rechaza login si el usuario no existe
+      <span class="pass">✓</span> rechaza login por contraseña en cuenta solo-OAuth
+      <span class="pass">✓</span> rechaza login si el usuario está desactivado
+    loginWithOAuthProfile
+      <span class="pass">✓</span> crea cuenta nueva en el primer login con Google
+      <span class="pass">✓</span> es idempotente: reutiliza la cuenta en un segundo login
+      <span class="pass">✓</span> vincula identidad Google a cuenta existente sin perder password
+      <span class="pass">✓</span> rechaza login si la cuenta vinculada está desactivada
+
+Coverage: Statements 36.58% · Branches 35.18% · Functions 16.07% · Lines 36.82%
+Test Suites: 2 passed, 2 total · Tests: 16 passed, 16 total
+</div>
+    </div>
+    <div class="col">
+      <div class="term"><span class="cmd">$ cd backend/sales-service && npx jest --coverage --verbose</span>
+
+<span class="hdr">PASS</span> src/sales/sales.service.spec.ts (20.3s)
+  SalesService
+    <span class="pass">✓</span> registra una venta válida: calcula el total y descuenta inventario
+    <span class="pass">✓</span> rechaza la venta si el producto no existe
+    <span class="pass">✓</span> rechaza la venta si el producto está desactivado
+    <span class="pass">✓</span> rechaza la venta si no hay stock suficiente (HU07)
+    <span class="pass">✓</span> rechaza la venta si el cliente no existe en customer-service
+    <span class="pass">✓</span> calcula correctamente el subtotal con varias líneas de producto
+
+
+
+
+Coverage: Statements 42.78% · Branches 18.91% · Functions 40.62% · Lines 44.72%
+Test Suites: 1 passed, 1 total · Tests: 6 passed, 6 total
+
+
+
+
+Total en los 8 microservicios: 61 pruebas, 9 suites, 0 fallos.
+</div>
+    </div>
+  </div>
+</body>
+</html>

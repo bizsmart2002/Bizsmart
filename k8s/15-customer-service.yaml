@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-service
+  namespace: bizsmart
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: customer-service }
+  template:
+    metadata:
+      labels: { app: customer-service }
+    spec:
+      containers:
+        - name: customer-service
+          image: bizsmart/customer-service:latest
+          ports: [{ containerPort: 3005 }]
+          envFrom:
+            - configMapRef: { name: bizsmart-config }
+          env:
+            - name: PORT
+              value: "3005"
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: DB_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: DB_PASSWORD } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: JWT_SECRET } }
+          readinessProbe:
+            httpGet: { path: /health, port: 3005 }
+            initialDelaySeconds: 8
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 3005 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-service
+  namespace: bizsmart
+spec:
+  selector: { app: customer-service }
+  ports: [{ port: 3005, targetPort: 3005 }]

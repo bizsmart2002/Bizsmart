@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: bizsmart
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: auth-service }
+  template:
+    metadata:
+      labels: { app: auth-service }
+    spec:
+      containers:
+        - name: auth-service
+          image: bizsmart/auth-service:latest
+          ports: [{ containerPort: 3001 }]
+          envFrom:
+            - configMapRef: { name: bizsmart-config }
+          env:
+            - name: PORT
+              value: "3001"
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: DB_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: DB_PASSWORD } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: JWT_SECRET } }
+          readinessProbe:
+            httpGet: { path: /health, port: 3001 }
+            initialDelaySeconds: 8
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 3001 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: bizsmart
+spec:
+  selector: { app: auth-service }
+  ports: [{ port: 3001, targetPort: 3001 }]

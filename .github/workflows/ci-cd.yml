@@ -1,0 +1,176 @@
+name: BizSmart CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ------------------------------------------------------------
+  # Backend: instala, lintea, compila y prueba cada microservicio
+  # usando una matriz (evita duplicar el job 8 veces).
+  # ------------------------------------------------------------
+  backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - product-service
+          - inventory-service
+          - sales-service
+          - customer-service
+          - reporting-service
+          - ai-service
+    defaults:
+      run:
+        working-directory: backend/${{ matrix.service }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/${{ matrix.service }}/package-lock.json
+
+      - name: Install
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      # Solo auth-service trae por ahora una carpeta test/ con pruebas e2e
+      # (Supertest) armadas; el resto de servicios sigue el mismo patrón
+      # documentado en TESTING.md para cuando se agreguen las suyas.
+      - name: e2e tests (Supertest)
+        if: matrix.service == 'auth-service'
+        run: npm run test:e2e
+
+      - name: Security audit (no bloqueante en esta etapa académica)
+        run: npm audit --audit-level=high || true
+
+  # ------------------------------------------------------------
+  # Frontend Angular
+  # ------------------------------------------------------------
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm install
+      - run: npm run build
+
+  # ------------------------------------------------------------
+  # Pruebas de API con Postman/Newman: levanta el stack completo con
+  # Docker Compose (igual que en un ambiente real) y corre la colección
+  # testing/postman/BizSmart.postman_collection.json contra el
+  # api-gateway. Es la prueba más "de caja negra" del pipeline: no le
+  # importa cómo está hecho cada microservicio por dentro, solo que la
+  # API responda lo que el negocio espera (login, CRUD, venta, dashboard).
+  # ------------------------------------------------------------
+  api-tests-newman:
+    needs: [backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Levantar el stack con Docker Compose
+        run: docker compose up -d --build
+
+      - name: Esperar a que el api-gateway responda
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/auth/me -o /dev/null -w '%{http_code}' | grep -q 401; then
+              echo "api-gateway listo"; exit 0
+            fi
+            echo "Esperando api-gateway... ($i)"; sleep 5
+          done
+          echo "api-gateway no respondió a tiempo"; docker compose logs; exit 1
+
+      - name: Correr la colección de Postman con Newman
+        run: |
+          npx --yes newman run testing/postman/BizSmart.postman_collection.json \
+            --environment testing/postman/BizSmart-local.postman_environment.json \
+            --reporters cli,junit --reporter-junit-export newman-report.xml
+
+      - name: Publicar el reporte de Newman
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: newman-report.xml
+
+      - name: Apagar el stack
+        if: always()
+        run: docker compose down -v
+
+  # ------------------------------------------------------------
+  # Docker build (solo en push a main; el "deploy" real depende del
+  # clúster/registry del equipo y queda como plantilla a completar)
+  # ------------------------------------------------------------
+  docker-build:
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - product-service
+          - inventory-service
+          - sales-service
+          - customer-service
+          - reporting-service
+          - ai-service
+          - frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (sin publicar - agregar login+push cuando exista registry)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service == 'frontend' && 'frontend' || format('backend/{0}', matrix.service) }}
+          push: false
+          tags: bizsmart/${{ matrix.service }}:${{ github.sha }}
+
+      # Para publicar a un registry (Docker Hub, GHCR, etc.), agregar:
+      #   - uses: docker/login-action@v3
+      #     with: { registry: ghcr.io, username: ${{ github.actor }}, password: ${{ secrets.GITHUB_TOKEN }} }
+      #   y cambiar push: true + tags con el registry real.
+
+  # ------------------------------------------------------------
+  # Deploy (plantilla) - aplicar manifiestos de k8s/ contra el clúster
+  # del equipo. Requiere configurar KUBE_CONFIG como secret del repo.
+  # ------------------------------------------------------------
+  deploy:
+    needs: [docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy a Kubernetes (placeholder)
+        run: |
+          echo "Configurar aquí kubectl apply -f k8s/ contra el clúster real."
+          echo "Requiere: secrets.KUBE_CONFIG y un registry de imágenes accesible desde el clúster."

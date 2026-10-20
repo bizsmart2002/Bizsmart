@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Evidencia real - Seguridad</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; background:#FFFFFF; margin:0; padding:30px 40px; color:#1B1B1F; }
+  h1 { font-family: Cambria, Georgia, serif; color:#21295C; font-size:22px; margin-bottom:4px; }
+  .sub { color:#5A6472; font-size:13px; margin-bottom:18px; }
+  .term { background:#1B1B1F; color:#D7F5D0; font-family: Consolas, monospace; font-size:12.5px; padding:16px 18px; border-radius:8px; white-space:pre; line-height:1.5; }
+  .fail { color:#F87171; } .cmd { color:#63E6DD; } .hdr { color:#F2A541; }
+</style>
+</head>
+<body>
+  <h1>BizSmart — Seguridad (revisión de código + fuzzing vía Postman)</h1>
+  <div class="sub">Hallazgo confirmado dos veces, por vías independientes</div>
+  <div class="term"><span class="cmd">$ curl -X POST {{baseUrl}}/products -H "Authorization: Bearer $OWNER_TOKEN" \
+     -d '{"name":"AAAA...(2000)", "price":100, "minimumStock":1}'</span>
+
+HTTP/1.1 <span class="fail">500 Internal Server Error</span>
+{
+  "statusCode": 500,
+  "message": "Internal server error"
+}
+
+<span class="hdr">Causa raíz (código leído, no inferido):</span>
+product-service/src/products/dto/product.dto.ts — CreateProductDto.name
+no declara @MaxLength(): el payload llega sin límite hasta la capa
+de persistencia y revienta ahí en vez de ser rechazado con 400.
+
+<span class="hdr">Confirmado por 2 vías independientes:</span>
+  1) VERONICA, vía Newman (colección automatizada)
+  2) JARVIS, en vivo, en la propia interfaz de Postman
+
+<span class="hdr">Segundo hallazgo (sin explotar, solo leído en código):</span>
+inventory-service/src/movements/inventory.controller.ts:40
+POST /inventory/movements/sale NO tiene @Roles() — un usuario
+VIEWER (solo lectura) puede descontar stock real llamándolo
+directamente. Decisión del usuario: queda documentado, sin corregir.
+</div>
+</body>
+</html>

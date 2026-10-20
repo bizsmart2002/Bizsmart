@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting-service
+  namespace: bizsmart
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: reporting-service }
+  template:
+    metadata:
+      labels: { app: reporting-service }
+    spec:
+      containers:
+        - name: reporting-service
+          image: bizsmart/reporting-service:latest
+          ports: [{ containerPort: 3006 }]
+          envFrom:
+            - configMapRef: { name: bizsmart-config }
+          env:
+            - name: PORT
+              value: "3006"
+            - name: DB_USER
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: DB_USER } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: DB_PASSWORD } }
+            - name: JWT_SECRET
+              valueFrom: { secretKeyRef: { name: bizsmart-secrets, key: JWT_SECRET } }
+          readinessProbe:
+            httpGet: { path: /health, port: 3006 }
+            initialDelaySeconds: 8
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 3006 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting-service
+  namespace: bizsmart
+spec:
+  selector: { app: reporting-service }
+  ports: [{ port: 3006, targetPort: 3006 }]

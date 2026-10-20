@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>BizSmart - Resultado real Postman/Newman</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; background: #FFFFFF; margin: 0; padding: 40px 50px; color: #1B1B1F; }
+  h1 { font-family: Cambria, Georgia, serif; color: #21295C; font-size: 28px; margin-bottom: 4px; }
+  .sub { color: #5A6472; font-size: 15px; margin-bottom: 28px; }
+  .kpis { display: flex; gap: 18px; margin-bottom: 30px; }
+  .kpi { flex: 1; background: #EAF2F8; border-radius: 10px; padding: 18px; text-align: center; }
+  .kpi .val { font-size: 34px; font-weight: bold; font-family: Cambria, Georgia, serif; }
+  .kpi .lbl { font-size: 13px; color: #1B1B1F; margin-top: 4px; }
+  .ok { color: #065A82; } .ok2 { color: #1C7293; } .good { color: #02C39A; } .bad { color: #D64550; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 26px; }
+  th { background: #21295C; color: white; text-align: left; padding: 10px 12px; font-size: 14px; }
+  td { padding: 9px 12px; border-bottom: 1px solid #E3E7EC; font-size: 13.5px; }
+  tr:nth-child(even) td { background: #FAFBFC; }
+  .fail { color: #D64550; font-weight: bold; }
+  .pass { color: #02C39A; font-weight: bold; }
+  .section-title { font-family: Cambria, Georgia, serif; font-size: 18px; color: #21295C; margin: 24px 0 10px; }
+  .cmd { background: #1B1B1F; color: #EAF2F8; font-family: Consolas, monospace; font-size: 12.5px; padding: 12px 16px; border-radius: 8px; }
+  .footer { margin-top: 20px; font-size: 11px; color: #9AA5B1; }
+</style>
+</head>
+<body>
+  <h1>BizSmart — Colección Postman / Newman (resultado real)</h1>
+  <div class="sub">Corrida contra el stack Docker local · api-gateway http://localhost:3000 · 13-oct-2026</div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="val ok">186</div><div class="lbl">requests ejecutados</div></div>
+    <div class="kpi"><div class="val ok2">183</div><div class="lbl">test-scripts</div></div>
+    <div class="kpi"><div class="val good">273</div><div class="lbl">aserciones en verde</div></div>
+    <div class="kpi"><div class="val bad">3</div><div class="lbl">aserciones en rojo</div></div>
+  </div>
+
+  <div class="section-title">Comando ejecutado</div>
+  <div class="cmd">newman run testing/postman/BizSmart.postman_collection.json \<br>&nbsp;&nbsp;-e testing/postman/BizSmart-local.postman_environment.json \<br>&nbsp;&nbsp;--delay-request 250 -r cli,htmlextra</div>
+
+  <div class="section-title">Resumen de la corrida</div>
+  <table>
+    <tr><th>Métrica</th><th>Ejecutados</th><th>Fallidos</th></tr>
+    <tr><td>iterations</td><td>1</td><td>0</td></tr>
+    <tr><td>requests</td><td>186</td><td>0</td></tr>
+    <tr><td>test-scripts</td><td>183</td><td>0</td></tr>
+    <tr><td>prerequest-scripts</td><td>10</td><td>0</td></tr>
+    <tr><td>assertions</td><td>276</td><td class="fail">3</td></tr>
+  </table>
+  <div class="sub">Duración total: 1m 8s &nbsp;·&nbsp; Datos recibidos: ~992 kB &nbsp;·&nbsp; Tiempo de respuesta promedio: 25 ms</div>
+
+  <div class="section-title">Detalle de las 3 fallas (deterministas, mismas en corridas repetidas)</div>
+  <table>
+    <tr><th>#</th><th>Carpeta / request</th><th>Esperado</th><th>Real</th></tr>
+    <tr><td>1</td><td>5. Products / POST /products — nombre extremadamente largo (10000 chars)</td><td class="pass">400 (rechazo) o 201 sin error</td><td class="fail">500 Internal Server Error</td></tr>
+    <tr><td>2</td><td>5. Products / POST /products — nombre extremadamente largo (10000 chars)</td><td class="pass">nunca 500 con input hostil</td><td class="fail">500 Internal Server Error</td></tr>
+    <tr><td>3</td><td>7. Inventory / GET /inventory/:productId — inexistente</td><td class="pass">404 Not Found</td><td class="fail">500 Internal Server Error</td></tr>
+  </table>
+
+  <div class="section-title">Flujo de venta — antes era el hallazgo crítico, ahora pasa completo</div>
+  <table>
+    <tr><th>Paso E2E</th><th>Resultado</th></tr>
+    <tr><td>Registrar venta (producto con stock real)</td><td class="pass">201 Created</td></tr>
+    <tr><td>Total = precio × cantidad</td><td class="pass">correcto</td></tr>
+    <tr><td>Stock descontado en inventario</td><td class="pass">verificado</td></tr>
+    <tr><td>Aparece en historial de compras del cliente</td><td class="pass">verificado</td></tr>
+    <tr><td>Dashboard refleja la venta (salesCount)</td><td class="pass">verificado</td></tr>
+  </table>
+
+  <div class="footer">Generado a partir de la salida real de `newman run` — sin cifras inventadas. Ver testing/postman/README.md para el detalle completo de hallazgos.</div>
+</body>
+</html>

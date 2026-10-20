@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Evidencia real - Pruebas de integración</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; background:#FFFFFF; margin:0; padding:30px 40px; color:#1B1B1F; }
+  h1 { font-family: Cambria, Georgia, serif; color:#21295C; font-size:22px; margin-bottom:4px; }
+  .sub { color:#5A6472; font-size:13px; margin-bottom:18px; }
+  .term { background:#1B1B1F; color:#D7F5D0; font-family: Consolas, monospace; font-size:13px; padding:16px 18px; border-radius:8px; white-space:pre; line-height:1.5; }
+  .term .pass { color:#4ADE80; }
+  .term .cmd { color:#63E6DD; }
+  .term .hdr { color:#F2A541; }
+  .cols { display:flex; gap:16px; }
+  .col { flex:1; }
+</style>
+</head>
+<body>
+  <h1>BizSmart — Pruebas de integración (Supertest)</h1>
+  <div class="sub">Dos variantes reales: capa HTTP con mocks (izquierda) vs. integración real sin mocks (derecha)</div>
+  <div class="cols">
+    <div class="col">
+      <div class="term"><span class="cmd">$ cd backend/auth-service
+$ npm run test:e2e</span>
+
+<span class="hdr">PASS</span> test/auth.e2e-spec.ts (16.2s)
+  AuthController (e2e)
+    <span class="pass">✓</span> POST /auth/login -> 200 y token con credenciales válidas
+    <span class="pass">✓</span> POST /auth/login -> 401 si AuthService rechaza
+    <span class="pass">✓</span> POST /auth/login -> 400 email con formato inválido
+    <span class="pass">✓</span> POST /auth/login -> 400 falta la contraseña
+    <span class="pass">✓</span> POST /auth/login -> 400 body con campos no permitidos
+
+Test Suites: 1 passed, 1 total
+Tests: 5 passed, 5 total
+
+AuthService está MOCKEADO: prueba la ruta,
+el ValidationPipe y los status codes reales —
+no la lógica de negocio ni la BD.
+</div>
+    </div>
+    <div class="col">
+      <div class="term"><span class="cmd">$ cd testing/integration
+$ npm test</span>  <span style="color:#9AA5B1"># contra el stack Docker real</span>
+
+<span class="hdr">PASS</span> ./sales-inventory.int-spec.js
+  Integración real: productos <-> inventario
+  <-> ventas <-> clientes
+    <span class="pass">✓</span> product-service <-> inventory-service:
+      stock recién cargado es visible y suficiente
+    <span class="pass">✓</span> sales -> product + inventory: registrar
+      venta valida producto, descuenta stock
+      real y persiste en BD (290 ms)
+    <span class="pass">✓</span> sales <-> customer-service: la venta
+      aparece en el historial real del cliente
+    <span class="pass">✓</span> sales <-> customer-service: rechaza
+      venta con cliente inexistente
+
+Test Suites: 1 passed, 1 total
+Tests: 4 passed, 4 total
+
+Sin mocks: BD Postgres real + red real
+entre los 4 contenedores.
+</div>
+    </div>
+  </div>
+</body>
+</html>

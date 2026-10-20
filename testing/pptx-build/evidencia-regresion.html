@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Evidencia real - Regresión (run-all.sh)</title>
+<style>
+  body { font-family: Calibri, Arial, sans-serif; background:#FFFFFF; margin:0; padding:30px 40px; color:#1B1B1F; }
+  h1 { font-family: Cambria, Georgia, serif; color:#21295C; font-size:22px; margin-bottom:4px; }
+  .sub { color:#5A6472; font-size:13px; margin-bottom:18px; }
+  .term { background:#1B1B1F; color:#D7F5D0; font-family: Consolas, monospace; font-size:13px; padding:16px 18px; border-radius:8px; white-space:pre; line-height:1.5; }
+  .term .pass { color:#4ADE80; }
+  .term .cmd { color:#63E6DD; }
+  .term .hdr { color:#F2A541; }
+  .term .fail { color:#F87171; }
+</style>
+</head>
+<body>
+  <h1>BizSmart — Regresión (testing/run-all.sh)</h1>
+  <div class="sub">Un solo comando encadena los 4 niveles automatizados: unitarias → integración mock → integración real → sistema/API</div>
+  <div class="term"><span class="cmd">$ bash testing/run-all.sh</span>
+
+<span class="hdr">1) PRUEBAS UNITARIAS</span> (Jest, mocks, 8 servicios) .......... <span class="pass">61/61 OK</span>
+<span class="hdr">2) INTEGRACIÓN</span> (capa HTTP con mocks) — auth-service e2e ... <span class="pass">5/5 OK</span>
+<span class="hdr">3) INTEGRACIÓN REAL</span> (sin mocks, stack Docker) ............ <span class="pass">4/4 OK</span>
+<span class="hdr">4) SISTEMA / API</span> (Postman + Newman) ...................... 273/276 OK
+
+<span class="fail">❌ 3 aserciones en rojo (hallazgos ya conocidos, NO regresiones nuevas):</span>
+   · POST /products nombre 10.000 chars -> 500 (debería ser 400)
+   · GET /inventory/:id inexistente -> 500 (debería ser 404)
+
+El script marca la corrida en rojo mientras esos 2 defectos
+sigan abiertos — es justamente su función: avisar que algo
+conocido (y SOLO eso) sigue roto, sin maquillar el resultado.
+
+El flujo de venta E2E (antes el hallazgo crítico) pasa COMPLETO.
+</div>
+</body>
+</html>
